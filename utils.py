@@ -4,6 +4,8 @@ import torch_pruning as pruning
 from vgg_cifar import vgg19_cifar
 import numpy as np
 import logging
+import json
+
 
 msglogger = logging.getLogger()
 
@@ -54,8 +56,11 @@ def denormalize_module_name(parallel_model, normalized_name):
 def get_pretrained_vgg19(model_path):
     model = vgg19_cifar()
     checkpoint_data = torch.load(model_path)
-    normalize_state_dict(checkpoint_data['net'])
-    model.load_state_dict(checkpoint_data['net'])
+    net_kyw = 'state_dict'
+    if checkpoint_data['state_dict'] == None:
+        net_kyw = 'net'
+    normalize_state_dict(checkpoint_data[net_kyw])
+    model.load_state_dict(checkpoint_data[net_kyw])
     return model
 
 
@@ -70,5 +75,19 @@ def hardprune_f(model, calc_prun_cand, pr_percentage=0.1):
         # print(pp)
         pp.exec()
     
+        
+def merge_prune_indexes(len_, prune_1, prune_2):
+    resulting_list = list(range(0,len_))
+    
+    for p in prune_1:
+        resulting_list.remove(p)
+    
+    for p in prune_2:
+        prune_1.append(resulting_list[p])
+    
+    prune_1.sort()
+    return prune_1
+
+
 
 
